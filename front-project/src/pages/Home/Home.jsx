@@ -1,13 +1,22 @@
+
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import * as transactionService from '../../services/transactionService';
 import './Home.css';
+import { getOne } from '../../services/userService';
 
 function Home() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [name, setName] = useState('');
+
+  // Filtros de data
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,6 +38,23 @@ function Home() {
     loadTransactions();
   }, []);
 
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userId = localStorage.getItem('userId');
+        const response = await getOne(userId);
+        const data = response.data;
+
+        setName(data.data.name);
+      } catch (error) {
+        console.error('Erro ao buscar usuário:', error);
+        setError('Erro ao carregar dados do usuário.');
+      }
+    };
+
+    loadUser();
+  }, []);
+
   const formatCurrency = (value) => {
     return Number(value || 0).toLocaleString('pt-BR', {
       style: 'currency',
@@ -38,6 +64,7 @@ function Home() {
 
   const isIncome = (transaction) => transaction.type === 'income';
 
+  // Indicadores financeiros considerando todas as transações
   const totalIncome = transactions
     .filter(isIncome)
     .reduce(
@@ -54,6 +81,20 @@ function Home() {
 
   const balance = totalIncome - totalExpenses;
 
+  // Filtragem e ordenação das transações
+  const filteredTransactions = [...transactions]
+    .filter((transaction) => {
+      const date = transaction.transaction_date;
+
+      if (startDate && date < startDate) return false;
+      if (endDate && date > endDate) return false;
+
+      return true;
+    })
+    .sort((a, b) =>
+      b.transaction_date.localeCompare(a.transaction_date)
+    );
+
   const handleDelete = async (id) => {
     const confirmed = window.confirm(
       'Tem certeza que deseja excluir esta transação?'
@@ -67,6 +108,10 @@ function Home() {
       setTransactions((previousTransactions) =>
         previousTransactions.filter((transaction) => transaction.id !== id)
       );
+
+      if (selectedTransaction?.id === id) {
+        setSelectedTransaction(null);
+      }
     } catch (err) {
       console.error('Erro ao excluir transação:', err);
       setError('Não foi possível excluir a transação.');
@@ -75,6 +120,7 @@ function Home() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userId');
     sessionStorage.removeItem('token');
 
     navigate('/');
@@ -82,9 +128,9 @@ function Home() {
 
   return (
     <div className="container py-4">
-    <header className="d-flex justify-content-between align-items-center mb-4">
+      <header className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 className="h3 mb-1">Painel financeiro</h1>
+          <h1 className="h3 mb-1">Painel financeiro de {name}</h1>
           <p className="text-muted mb-0">
             Acompanhe suas finanças em um só lugar.
           </p>
@@ -95,13 +141,61 @@ function Home() {
             + Nova transação
           </Link>
 
-          <button
-            type="button"
-            className="btn btn-outline-danger"
-            onClick={handleLogout}
-          >
-            Sair
-          </button>
+          <div className="position-relative">
+            <button
+              type="button"
+              className="btn btn-light border rounded-circle profile-button"
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+              aria-label="Menu do perfil"
+              aria-expanded={profileMenuOpen}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="8" r="4" />
+                <path d="M5 21a7 7 0 0 1 14 0" />
+              </svg>
+            </button>
+
+            {profileMenuOpen && (
+              <>
+                <div
+                  className="profile-backdrop"
+                  onClick={() => setProfileMenuOpen(false)}
+                />
+
+                <div className="profile-dropdown shadow">
+                  <Link
+                    to="/profile/edit"
+                    className="profile-menu-item"
+                    onClick={() => setProfileMenuOpen(false)}
+                  >
+                    <i className="bi bi-person-gear"></i>
+                    Editar perfil
+                  </Link>
+
+                  <hr className="my-1" />
+
+                  <button
+                    type="button"
+                    className="profile-menu-item text-danger w-100"
+                    onClick={handleLogout}
+                  >
+                    <i className="bi bi-box-arrow-right"></i>
+                    Sair
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -140,11 +234,48 @@ function Home() {
       </div>
 
       <div className="row g-3">
-        {/* Transações recentes */}
+        {/* Transações */}
         <div className="col-12 col-lg-8">
           <div className="card h-100">
             <div className="card-body">
-              <h2 className="h5 mb-3">Transações recentes</h2>
+              <h2 className="h5 mb-3">Transações</h2>
+
+              {/* Filtros de data */}
+              <div className="row g-2 mb-3">
+                <div className="col-12 col-md-5">
+                  <label className="form-label">Data inicial</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="col-12 col-md-5">
+                  <label className="form-label">Data final</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={endDate}
+                    min={startDate || undefined}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+
+                <div className="col-12 col-md-2 d-flex align-items-end">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary w-100"
+                    onClick={() => {
+                      setStartDate('');
+                      setEndDate('');
+                    }}
+                  >
+                    Limpar
+                  </button>
+                </div>
+              </div>
 
               {loading && (
                 <p className="text-muted">Carregando transações...</p>
@@ -154,76 +285,73 @@ function Home() {
                 <p className="text-danger">{error}</p>
               )}
 
-              {!loading && !error && transactions.length === 0 && (
+              {!loading && !error && filteredTransactions.length === 0 && (
                 <p className="text-muted mb-0">
-                  Nenhuma transação encontrada.
+                  {transactions.length === 0
+                    ? 'Nenhuma transação encontrada.'
+                    : 'Nenhuma transação encontrada nesse período.'}
                 </p>
               )}
 
-              {!loading && !error && transactions.length > 0 && (
+              {!loading && !error && filteredTransactions.length > 0 && (
                 <div className="table-responsive">
                   <table className="table align-middle mb-0">
                     <thead>
                       <tr>
                         <th>Categoria</th>
-                        <th>Tipo</th>
                         <th className="text-end">Valor</th>
+                        <th className="text-end">Data</th>
                         <th className="text-end">Ações</th>
                       </tr>
                     </thead>
 
                     <tbody>
-                      {[...transactions]
-                        .slice(0, 5)
-                        .map((transaction) => (
-                          <tr key={transaction.id}>
-                            <td>
-                              {transaction.category || 'Sem categoria'}
-                            </td>
+                      {filteredTransactions.map((transaction) => (
+                        <tr key={transaction.id}>
+                          <td>
+                            {transaction.category || 'Sem categoria'}
+                          </td>
 
-                            <td>
-                              <span
-                                className={
-                                  isIncome(transaction)
-                                    ? 'text-success'
-                                    : 'text-danger'
-                                }
-                              >
-                                {isIncome(transaction) ? 'Receita' : 'Despesa'}
-                              </span>
-                            </td>
+                          <td
+                            className={`text-end ${
+                              isIncome(transaction)
+                                ? 'text-success'
+                                : 'text-danger'
+                            }`}
+                          >
+                            {isIncome(transaction) ? '' : '-'}
+                            {formatCurrency(transaction.amount)}
+                          </td>
 
-                            <td
-                              className={`text-end ${
-                                isIncome(transaction)
-                                  ? 'text-success'
-                                  : 'text-danger'
-                              }`}
+                          <td className="text-end">
+                            {new Date(
+                              transaction.transaction_date + 'T00:00:00'
+                            ).toLocaleDateString('pt-BR')}
+                          </td>
+
+                          <td className="text-end text-nowrap">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-secondary me-2"
+                              onClick={() =>
+                                setSelectedTransaction(transaction)
+                              }
                             >
-                              {formatCurrency(transaction.amount)}
-                            </td>
+                              Ver descrição
+                            </button>
 
-                            <td className="text-end text-nowrap">
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-secondary me-2"
-                                onClick={() => setSelectedTransaction(transaction)}
-                              >
-                                Ver descrição
-                              </button>
-
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-danger"
-                                onClick={() => handleDelete(transaction.id)}
-                                title="Excluir transação"
-                                aria-label={`Excluir transação ${transaction.description || ''}`}
-                              >
-                                Excluir
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => handleDelete(transaction.id)}
+                              title="Excluir transação"
+                              aria-label={`Excluir transação ${transaction.description || ''}`}
+                            >
+                              Excluir
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -257,6 +385,8 @@ function Home() {
           </div>
         </div>
       </div>
+
+      {/* Modal de descrição */}
       {selectedTransaction && (
         <div
           className="modal fade show d-block"
@@ -273,10 +403,7 @@ function Home() {
           >
             <div className="modal-content">
               <div className="modal-header">
-                <h5
-                  className="modal-title"
-                  id="descriptionModalTitle"
-                >
+                <h5 className="modal-title" id="descriptionModalTitle">
                   Descrição da transação
                 </h5>
 
@@ -289,9 +416,7 @@ function Home() {
               </div>
 
               <div className="modal-body">
-                <p className="text-muted small mb-1">
-                  Categoria
-                </p>
+                <p className="text-muted small mb-1">Categoria</p>
                 <p className="fw-semibold mb-3">
                   {selectedTransaction.category || 'Sem categoria'}
                 </p>

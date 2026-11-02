@@ -4,6 +4,7 @@ import Signup from '../pages/Signup/Signup';
 import Home from '../pages/Home/Home';
 import ProtectedRoute from './protectedRoute';
 import TransactionForm from '../pages/Transactions/TransactionsForm';
+import Profile from '../pages/Profile/Profile';
 
 export default function AppRoutes() {
   return (
@@ -20,6 +21,7 @@ export default function AppRoutes() {
           } 
         />
         <Route path="/transactions/new" element={<TransactionForm />} />
+        <Route path="/profile/edit" element={<Profile />} />
       </Routes>
   );
 }

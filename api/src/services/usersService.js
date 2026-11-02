@@ -25,12 +25,6 @@ exports.create = async (data) => {
 };
 
 exports.update = async (id, data) => {
-  const existingUser = await usersRepository.findByEmail({ email: data.email });
-
-  if (existingUser) {
-    return null;
-  }
-
   return await usersRepository.update(id, data);
 };
 

@@ -94,8 +94,6 @@ exports.update = async (req, res) => {
     const { id } = req.params;
     const { name, email } = req.body;
 
-    console.log(req)
-
     if (!isUUID(id)) {
       return res.status(400).json({
         message: 'Invalid user'

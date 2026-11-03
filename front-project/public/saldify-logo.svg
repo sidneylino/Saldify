@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="green" x1="128" y1="385" x2="367" y2="184" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00D89A"/>
+      <stop offset="1" stop-color="#4AF078"/>
+    </linearGradient>
+    <linearGradient id="white" x1="174" y1="104" x2="333" y2="350" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E8EDF6"/>
+    </linearGradient>
+    <linearGradient id="bars" x1="239" y1="247" x2="286" y2="333" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#23E98C"/>
+      <stop offset="1" stop-color="#00A98D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Green lower stroke of the S -->
+  <path d="M92 406L143 337C153 323 168 315 185 315H337C361 315 378 302 387 282L421 303C407 342 374 365 331 365H190C180 365 173 369 167 377L145 406H92Z" fill="url(#green)"/>
+
+  <!-- Rising chart arrow -->
+  <path d="M252 279V232C252 225 258 219 265 219H278C285 219 291 225 291 232V258L321 230V205C321 198 327 192 334 192H347C354 192 360 198 360 205V193L414 138L391 131L493 82L493 191L466 169L432 203C411 225 389 243 364 258C336 275 306 287 274 292L252 279Z" fill="url(#green)" transform="translate(-26 0)"/>
+
+  <!-- Chart bars -->
+  <rect x="188" y="278" width="34" height="54" rx="10" fill="url(#bars)"/>
+  <rect x="237" y="246" width="35" height="86" rx="10" fill="url(#bars)"/>
+  <rect x="286" y="214" width="35" height="118" rx="10" fill="url(#bars)"/>
+
+  <!-- White ribbon forming the upper and middle S -->
+  <path d="M399 105H260C197 105 145 153 145 212C145 269 185 306 254 321L337 339C369 346 389 361 398 384C408 411 395 439 371 455C351 468 327 474 299 474H92L125 430H300C333 430 350 418 350 397C350 378 335 366 305 359L226 342C143 324 91 278 91 211C91 127 160 62 257 62H443L399 105Z" fill="url(#white)"/>
+</svg>
